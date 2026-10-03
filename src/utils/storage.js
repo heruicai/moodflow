@@ -1,33 +1,25 @@
-const KEY = 'moodflow-records-v1'
+const RECORDS_KEY = 'moodflow-records-v2'
+const LEGACY_KEY = 'moodflow-records-v1'
+const WRITING_KEY = 'moodflow-care-writing-v1'
 
-export function loadRecords() {
-  try {
-    const data = JSON.parse(localStorage.getItem(KEY) || '[]')
-    return Array.isArray(data) ? data : []
-  } catch {
-    return []
+function safeParse(value, fallback) { try { return JSON.parse(value) ?? fallback } catch { return fallback } }
+function normalize(record) {
+  return {
+    id: record.id || `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    createdAt: record.createdAt || record.date || new Date().toISOString(), mood: record.mood || '一般',
+    intensity: Number(record.intensity) || 5, emotionTags: Array.isArray(record.emotionTags) ? record.emotionTags : [],
+    triggerTags: Array.isArray(record.triggerTags) ? record.triggerTags : record.trigger ? [record.trigger] : [],
+    need: record.need || '', note: record.note || '', insightSummary: record.insightSummary || '', primaryAction: record.primaryAction || '',
   }
 }
-
-export function saveRecord(record) {
-  const records = loadRecords()
-  records.push(record)
-  localStorage.setItem(KEY, JSON.stringify(records))
-  return records
+export function loadRecords() {
+  const current = safeParse(localStorage.getItem(RECORDS_KEY), [])
+  if (Array.isArray(current) && current.length) return current.map(normalize)
+  const legacy = safeParse(localStorage.getItem(LEGACY_KEY), [])
+  if (Array.isArray(legacy) && legacy.length) { const migrated = legacy.map(normalize); localStorage.setItem(RECORDS_KEY, JSON.stringify(migrated)); return migrated }
+  return []
 }
-
-export function seedRecords() {
-  if (loadRecords().length) return loadRecords()
-  const now = new Date()
-  const values = [6, 7, 5, 4, 6]
-  const triggers = ['工作与任务', '睡眠不足', '工作与任务', '人际关系', '身体状态']
-  const moods = ['不错', '不错', '一般', '低落', '不错']
-  const records = values.map((intensity, index) => {
-    const date = new Date(now)
-    date.setDate(now.getDate() - (5 - index))
-    date.setHours(20, 0, 0, 0)
-    return { id: `sample-${index}`, date: date.toISOString(), intensity, trigger: triggers[index], mood: moods[index], need: '放松身体', note: '' }
-  })
-  localStorage.setItem(KEY, JSON.stringify(records))
-  return records
-}
+export function saveRecord(record) { const records = loadRecords(); if (records.some(item => item.id === record.id)) return records; const next = [normalize(record), ...records]; localStorage.setItem(RECORDS_KEY, JSON.stringify(next)); return next }
+export function deleteRecord(id) { const next = loadRecords().filter(item => item.id !== id); localStorage.setItem(RECORDS_KEY, JSON.stringify(next)); return next }
+export function loadWriting() { return localStorage.getItem(WRITING_KEY) || '' }
+export function saveWriting(value) { localStorage.setItem(WRITING_KEY, value) }

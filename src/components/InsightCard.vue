@@ -1,25 +1,14 @@
 <script setup>
-defineProps({ insight: { type: Object, required: true } })
-defineEmits(['open-care'])
+defineProps({ insight:{type:Object,required:true}, saved:Boolean })
+defineEmits(['save','open-care'])
 </script>
-
-<template>
-  <section class="insight-card">
-    <div class="insight-top">
-      <div><p class="eyebrow">你的情绪小结</p><h2>谢谢你愿意停下来，听见自己</h2></div>
-      <span class="insight-badge">✦ 温柔洞察</span>
-    </div>
-    <div class="insight-facts">
-      <div><span>我听到的情绪</span><strong>{{ insight.emotion }}</strong></div>
-      <div><span>可能的触发因素</span><strong>{{ insight.trigger }}</strong></div>
-      <div><span>当前可能的心理需求</span><strong>{{ insight.need }}</strong></div>
-    </div>
-    <blockquote>“{{ insight.summary }}”</blockquote>
-    <div class="action-section">
-      <div><p class="eyebrow">现在可以做的事</p><h3>从一个微小行动开始</h3></div>
-      <div class="action-list">
-        <button v-for="(action, index) in insight.actions" :key="action" @click="$emit('open-care')"><span>{{ index + 1 }}</span>{{ action }}</button>
-      </div>
-    </div>
-  </section>
-</template>
+<template><section class="insight-card">
+  <div class="insight-top"><div><p class="eyebrow">你的情绪小结</p><h2>谢谢你愿意停下来，听见自己</h2></div><span class="insight-badge">✦ 温柔洞察</span></div>
+  <div class="insight-sections">
+    <div class="insight-part"><span class="part-number">01</span><div><h3>你现在可能正在经历</h3><p>{{ insight.experience }}</p></div></div>
+    <div class="insight-part"><span class="part-number">02</span><div><h3>可能的触发点</h3><div class="insight-tags"><span v-for="tag in insight.triggers" :key="tag">{{ tag }}</span></div></div></div>
+    <div class="insight-part"><span class="part-number">03</span><div><h3>你此刻真正需要的可能是</h3><p>{{ insight.needText }}</p></div></div>
+    <div class="insight-part action-part"><span class="part-number">04</span><div><h3>现在最适合做的一件小事</h3><button class="primary-action" type="button" @click="$emit('open-care')"><span>{{ insight.primaryAction[0] }}</span><strong>{{ insight.primaryAction[1] }}</strong><small>去关怀空间试试</small></button><div class="secondary-actions"><button v-for="action in insight.secondaryActions" :key="action[1]" type="button" @click="$emit('open-care')">{{ action[0] }} {{ action[1] }}</button></div></div></div>
+  </div>
+  <div class="insight-save"><p>保存后，可以在趋势页回看这次记录。</p><button :class="['save-button',{saved}]" type="button" :disabled="saved" @click="$emit('save')">{{ saved ? '✓ 已保存' : '保存这次记录' }}</button></div>
+</section></template>
