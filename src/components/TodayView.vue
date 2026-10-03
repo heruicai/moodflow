@@ -24,19 +24,20 @@ function analyze() {
 }
 function save() {
   if (!insight.value || saved.value) return
-  emit('saved', { id:draftId.value, createdAt:new Date().toISOString(), mood:mood.value, intensity:intensity.value, emotionTags:[...emotionTags.value], triggerTags:[...triggerTags.value], need:need.value, note:note.value.trim(), insightSummary:insight.value.experience, primaryAction:insight.value.primaryAction[1] })
+  emit('saved', { id:draftId.value, createdAt:new Date().toISOString(), mood:mood.value, intensity:intensity.value, emotionTags:[...emotionTags.value], triggerTags:[...triggerTags.value], need:need.value, note:note.value.trim(), insightSummary:insight.value.experience, primaryAction:insight.value.primaryAction.label })
   saved.value = true
 }
 </script>
 <template>
   <section class="today-view">
-    <div class="welcome-row"><div><p class="eyebrow">{{ new Intl.DateTimeFormat('zh-CN',{month:'long',day:'numeric',weekday:'long'}).format(new Date()) }}</p><h1>{{ greeting }}，<br><span>今天过得怎么样？</span></h1></div><div class="daily-note"><span class="sparkle">✦</span><p>不需要急着变好<br>先听听心里发生了什么</p></div></div>
+    <section class="product-hero"><div class="hero-copy"><p class="hero-kicker">MoodFlow · 记录此刻，理解自己。</p><h1>{{ greeting }}，<br><span>今天过得怎么样？</span></h1><p class="hero-value">从情绪记录，到触发因素、需求识别和自我关怀，帮你把模糊的感受变成可理解、可行动的小步骤。</p></div><div class="hero-aside"><p class="eyebrow">{{ new Intl.DateTimeFormat('zh-CN',{month:'long',day:'numeric',weekday:'long'}).format(new Date()) }}</p><span class="sparkle">✦</span><p>不需要急着变好<br>先听听心里发生了什么</p></div></section>
+    <div class="flow-strip" aria-label="MoodFlow 产品流程"><span>记录情绪</span><i>·</i><span>理解原因</span><i>·</i><span>看见需求</span><i>·</i><span>做一件小事</span></div>
     <div class="journal-layout">
       <section class="card form-card mood-section"><div class="step-heading"><span>01</span><div><h2>此刻的心情</h2><p>选一个最接近的就好</p></div></div><div class="mood-options"><button v-for="item in moods" :key="item.label" type="button" :class="['mood-option',{selected:mood===item.label}]" @click="mood=item.label"><span class="mood-emoji">{{ item.emoji }}</span><span>{{ item.label }}</span></button></div><div class="intensity-wrap"><div class="slider-label"><label for="intensity">情绪强度</label><strong>{{ intensity }}<small>/10</small></strong></div><input id="intensity" v-model.number="intensity" type="range" min="1" max="10" :style="{'--value':`${(intensity-1)/9*100}%`}"><div class="scale"><span>轻微</span><span>强烈</span></div></div></section>
       <section class="card form-card story-section"><div class="step-heading"><span>02</span><div><h2>发生了什么？</h2><p>写多少都可以，这里只有你能看到</p></div></div><textarea v-model="note" maxlength="500" placeholder="比如：今天的会议让我有点挫败，我好像一直在担心自己做得不够好……"></textarea><div class="text-count">{{ note.length }} / 500</div></section>
       <section class="card form-card detail-section"><div class="selector-block"><div class="compact-heading"><h2>此刻更接近哪些感受？</h2><span>{{ emotionTags.length }}/3</span></div><TagSelector v-model="emotionTags" :options="emotionOptions" :max="3" /></div><div class="selector-block"><div class="compact-heading"><h2>这件事主要和什么有关？</h2><span>可多选</span></div><TagSelector v-model="triggerTags" :options="triggerOptions" :max="3" /></div><div class="selector-block"><div class="compact-heading"><h2>我现在更需要什么？</h2><span>选一项</span></div><TagSelector v-model="needSelection" :options="needOptions" :max="1" single /></div><p v-if="error" class="form-error" role="alert">{{ error }}</p><button class="primary-button analyze-button" type="button" @click="analyze">✦ 帮我梳理一下</button><p class="privacy-note">记录只会保存在你的设备上</p></section>
     </div>
     <CrisisCard v-if="crisis" id="result" />
-    <InsightCard v-else-if="insight" id="result" :insight="insight" :saved="saved" @save="save" @open-care="emit('open-care')" />
+    <InsightCard v-else-if="insight" id="result" :insight="insight" :saved="saved" @save="save" @open-care="emit('open-care',$event)" />
   </section>
 </template>

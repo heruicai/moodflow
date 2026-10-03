@@ -1,3 +1,5 @@
+import { getAction } from './actions.js'
+
 export const CRISIS_KEYWORDS = ['不想活', '想死', '自杀', '结束生命', '活着没意思', '撑不下去了']
 const needCopy = {
   '被理解': '先让自己的感受被完整听见，而不是急着证明它是否合理。', '安静一下': '暂时减少外界输入，让紧绷的心绪有机会慢慢落下来。',
@@ -6,10 +8,10 @@ const needCopy = {
   '获得肯定': '看见自己已经付出的努力，不把一次结果等同于全部价值。', '解决问题': '找出最可控的一小部分，先完成一个清晰、具体的动作。',
 }
 const actionSets = {
-  '被理解': [['📝', '写下最想被理解的一句话'], ['💬', '找朋友聊聊'], ['🌬', '做 1 分钟呼吸']], '安静一下': [['🌬', '1 分钟呼吸'], ['🎧', '听一段环境音'], ['📵', '放下手机 5 分钟']],
-  '找回动力': [['✅', '完成一件最小的事'], ['🚶', '走 10 分钟'], ['📝', '写下已完成的三件事']], '理清思绪': [['📝', '写下最担心的一件事'], ['🧩', '拆成三个小步骤'], ['🌬', '做 1 分钟呼吸']],
-  '放松身体': [['🧘', '做 2 分钟伸展'], ['🚶', '走 10 分钟'], ['🎧', '听一段环境音']], '有人陪伴': [['💬', '联系一个信任的人'], ['🚶', '去有人的地方走走'], ['📝', '写下想说的话']],
-  '获得肯定': [['📝', '记下一件做得不错的事'], ['💬', '向信任的人说出感受'], ['🌬', '做 1 分钟呼吸']], '解决问题': [['🧩', '写下一个可控的小步骤'], ['⏱', '专注处理 10 分钟'], ['🚶', '走一走再回来']],
+  '被理解': ['writing','talk','breathing'], '安静一下': ['breathing','sound','writing'],
+  '找回动力': ['smallStep','walk','writing'], '理清思绪': ['writing','breathing','walk'],
+  '放松身体': ['stretch','walk','sound'], '有人陪伴': ['talk','walk','writing'],
+  '获得肯定': ['writing','talk','breathing'], '解决问题': ['smallStep','writing','walk'],
 }
 const summaries = [
   ({event,tags,strength}) => `今天${event}似乎让你${tags}，而且这种感受现在${strength}。`, ({event,tags,strength}) => `在${event}之后，${tags}可能同时涌了上来，这份感受${strength}。`,
@@ -34,6 +36,6 @@ export function createInsight({ mood, intensity, emotionTags = [], triggerTags =
   const event = triggerTags.length ? triggerTags.slice(0, 2).join('和') : '最近发生的事情'
   const tags = emotionTags.length ? `感到${emotionTags.slice(0, 3).join('、')}` : `有些${mood}`
   const strength = intensity >= 8 ? '还比较强烈' : intensity >= 5 ? '值得被认真留意' : '虽不强烈，也值得被看见'
-  const actions = actionSets[need] || actionSets['安静一下']
+  const actions = (actionSets[need] || actionSets['安静一下']).map(getAction)
   return { experience: summaries[hash(`${note}${mood}${need}`) % summaries.length]({event,tags,strength}), triggers: triggerPoints(triggerTags, note), needText: needCopy[need] || '先停下来听听自己，而不是要求此刻马上得到答案。', primaryAction: actions[0], secondaryActions: actions.slice(1) }
 }
