@@ -1,25 +1,13 @@
-const RECORDS_KEY = 'moodflow-records-v2'
-const LEGACY_KEY = 'moodflow-records-v1'
-const WRITING_KEY = 'moodflow-care-writing-v1'
-
-function safeParse(value, fallback) { try { return JSON.parse(value) ?? fallback } catch { return fallback } }
-function normalize(record) {
-  return {
-    id: record.id || `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-    createdAt: record.createdAt || record.date || new Date().toISOString(), mood: record.mood || '一般',
-    intensity: Number(record.intensity) || 5, emotionTags: Array.isArray(record.emotionTags) ? record.emotionTags : [],
-    triggerTags: Array.isArray(record.triggerTags) ? record.triggerTags : record.trigger ? [record.trigger] : [],
-    need: record.need || '', note: record.note || '', insightSummary: record.insightSummary || '', primaryAction: record.primaryAction || '',
-  }
-}
-export function loadRecords() {
-  const current = safeParse(localStorage.getItem(RECORDS_KEY), [])
-  if (Array.isArray(current) && current.length) return current.map(normalize)
-  const legacy = safeParse(localStorage.getItem(LEGACY_KEY), [])
-  if (Array.isArray(legacy) && legacy.length) { const migrated = legacy.map(normalize); localStorage.setItem(RECORDS_KEY, JSON.stringify(migrated)); return migrated }
-  return []
-}
-export function saveRecord(record) { const records = loadRecords(); if (records.some(item => item.id === record.id)) return records; const next = [normalize(record), ...records]; localStorage.setItem(RECORDS_KEY, JSON.stringify(next)); return next }
-export function deleteRecord(id) { const next = loadRecords().filter(item => item.id !== id); localStorage.setItem(RECORDS_KEY, JSON.stringify(next)); return next }
-export function loadWriting() { return localStorage.getItem(WRITING_KEY) || '' }
-export function saveWriting(value) { localStorage.setItem(WRITING_KEY, value) }
+const RECORDS_KEY='moodflow-records-v2',LEGACY_KEY='moodflow-records-v1',WRITING_KEY='moodflow-care-writing-v1',CUSTOM_KEY='moodflow-custom-tags-v1',CARE_KEY='moodflow-care-completions-v1'
+function parse(value,fallback){try{return JSON.parse(value)??fallback}catch{return fallback}}
+function normalize(record){return{id:record.id||`${Date.now()}-${Math.random().toString(16).slice(2)}`,createdAt:record.createdAt||record.date||new Date().toISOString(),updatedAt:record.updatedAt||record.createdAt||record.date||new Date().toISOString(),mood:record.mood||'一般',intensity:Number(record.intensity)||5,emotionTags:Array.isArray(record.emotionTags)?record.emotionTags:[],triggerTags:Array.isArray(record.triggerTags)?record.triggerTags:record.trigger?[record.trigger]:[],need:record.need||'',positiveChoice:record.positiveChoice||'',note:record.note||'',insightSummary:record.insightSummary||'',primaryAction:record.primaryAction||'',customTags:record.customTags||{emotion:[],trigger:[],need:[]}}}
+export function loadRecords(){const current=parse(localStorage.getItem(RECORDS_KEY),[]);if(Array.isArray(current)&&current.length)return current.map(normalize);const legacy=parse(localStorage.getItem(LEGACY_KEY),[]);if(Array.isArray(legacy)&&legacy.length){const migrated=legacy.map(normalize);localStorage.setItem(RECORDS_KEY,JSON.stringify(migrated));return migrated}return[]}
+export function upsertRecord(record){const records=loadRecords(),index=records.findIndex(item=>item.id===record.id),nextRecord=normalize({...record,updatedAt:new Date().toISOString()});if(index>=0)records[index]=nextRecord;else records.unshift(nextRecord);localStorage.setItem(RECORDS_KEY,JSON.stringify(records));return records}
+export const saveRecord=upsertRecord
+export function deleteRecord(id){const next=loadRecords().filter(item=>item.id!==id);localStorage.setItem(RECORDS_KEY,JSON.stringify(next));return next}
+export function loadCustomTags(){const value=parse(localStorage.getItem(CUSTOM_KEY),{});return{emotion:Array.isArray(value.emotion)?value.emotion:[],trigger:Array.isArray(value.trigger)?value.trigger:[],need:Array.isArray(value.need)?value.need:[]}}
+export function saveCustomTag(type,label){const tags=loadCustomTags();if(!tags[type]||tags[type].includes(label))return tags;tags[type]=[...tags[type],label];localStorage.setItem(CUSTOM_KEY,JSON.stringify(tags));return tags}
+export function deleteCustomTag(type,label){const tags=loadCustomTags();tags[type]=(tags[type]||[]).filter(item=>item!==label);localStorage.setItem(CUSTOM_KEY,JSON.stringify(tags));return tags}
+export function loadCareCompletions(){const values=parse(localStorage.getItem(CARE_KEY),[]);return Array.isArray(values)?values.map(item=>({id:item.id||`${Date.now()}`,actionId:item.actionId||'unknown',actionName:item.actionName||'自我关怀',completedAt:item.completedAt||new Date().toISOString(),sourceRecordId:item.sourceRecordId||''})):[]}
+export function saveCareCompletion(completion){const next=[{id:`care-${Date.now()}-${Math.random().toString(16).slice(2)}`,completedAt:new Date().toISOString(),sourceRecordId:'',...completion},...loadCareCompletions()];localStorage.setItem(CARE_KEY,JSON.stringify(next));return next}
+export function loadWriting(){return localStorage.getItem(WRITING_KEY)||''}export function saveWriting(value){localStorage.setItem(WRITING_KEY,value)}

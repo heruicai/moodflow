@@ -33,8 +33,14 @@ function triggerPoints(triggerTags, note) {
   return unique.length ? unique.slice(0, 2) : (triggerTags.length ? triggerTags.slice(0, 2).map(tag => `与${tag}有关的持续消耗`) : ['一些尚未被说清的压力'])
 }
 export function createInsight({ mood, intensity, emotionTags = [], triggerTags = [], need, note = '' }) {
+  const positive = ['很好','不错'].includes(mood)
   const event = triggerTags.length ? triggerTags.slice(0, 2).join('和') : '最近发生的事情'
   const tags = emotionTags.length ? `感到${emotionTags.slice(0, 3).join('、')}` : `有些${mood}`
+  if(positive){
+    const experience=triggerTags.length?`今天似乎有一些与${event}有关、值得开心的事情。${emotionTags.length?`你提到的${emotionTags.slice(0,2).join('和')}，也让这一刻更清晰。`:''}`:`今天的状态看起来不错，这份轻松或开心本身就值得被记住。`
+    const actions=(need==='分享给重要的人'?['talk','writing','walk']:need==='延续这份状态'?['walk','writing','sound']:['writing','talk','walk']).map(getAction)
+    return{experience,triggers:triggerTags.length?triggerTags.slice(0,2).map(tag=>`${tag}带来的积极感受`):['这一刻自然流露出的好心情'],needText:need&&need!=='什么都不用做'?`如果愿意，可以选择“${need}”，让这份好状态多停留一会儿。`:'有时候不需要解决什么，单纯感受这份开心就很好。',primaryAction:need==='什么都不用做'?null:actions[0],secondaryActions:need==='什么都不用做'?[]:actions.slice(1)}
+  }
   const strength = intensity >= 8 ? '还比较强烈' : intensity >= 5 ? '值得被认真留意' : '虽不强烈，也值得被看见'
   const actions = (actionSets[need] || actionSets['安静一下']).map(getAction)
   return { experience: summaries[hash(`${note}${mood}${need}`) % summaries.length]({event,tags,strength}), triggers: triggerPoints(triggerTags, note), needText: needCopy[need] || '先停下来听听自己，而不是要求此刻马上得到答案。', primaryAction: actions[0], secondaryActions: actions.slice(1) }
