@@ -19,7 +19,7 @@ export function createAmbientAudio(onStateChange=()=>{}) {
     if(name==='轻钢琴'){const notes=[261.63,329.63,392,523.25,440,392];let i=0;interval(()=>{tone(notes[i++%notes.length],1.8,.065,'sine')},1600)}
   }
   function stop(){timers.forEach(clearInterval);timers=[];nodes.forEach(node=>{try{if(typeof node.stop==='function')node.stop()}catch{}try{node.disconnect()}catch{}});nodes=[];current='';onStateChange('')}
-  async function play(name){if(current===name){stop();return ''}stop();await ensure();current=name;build(name);onStateChange(name);return name}
+  async function play(name){if(current===name)return name;stop();await ensure();current=name;build(name);onStateChange(name);return name}
   function setVolume(value){volume=Math.max(0,Math.min(1,Number(value)));if(master&&context)master.gain.setTargetAtTime(volume,context.currentTime,.03)}
   async function destroy(){stop();if(context&&context.state!=='closed')await context.close();context=null;master=null}
   return {play,stop,setVolume,destroy,get current(){return current}}
